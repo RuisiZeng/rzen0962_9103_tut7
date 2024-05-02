@@ -21,6 +21,7 @@ This code can help to achieve the third interaction effect.
 3. set the size of the circle with different sizes over time, to form the effect of moving gradient.
 This can creates an interactive canvas.
 
-![An image of code](210907.png)
+![An image of code](readmeImages/215433.jpg)
+
 [Link Web](https://processing.org/examples/storinginput.html)
 
