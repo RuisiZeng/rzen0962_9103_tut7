@@ -12,7 +12,7 @@ I chose audio to drive my personal code.
 
 # Inspiration
 My personal inspiration image is the disc jockey. Since the part I chose was audio, it was natural to think of making a large disc jockey for music that grooves with the music and can be controlled as the group code took shape.
-![a picture of disc jockey](asstets/20240531165400.jpg)
+![a picture of disc jockey](readmeimages/20240531165400.jpg)
 
 # Technical explanation
 1.Based on the group code, I inserted the audio file and used fft to convert the added audio signal to universal frequency data, in addition to using frequency data segments and smoothing to control the data. After analysing the audio it was interacted with the existing graphics. Additionally a control button was added to control the start and pause of the audio.
