@@ -1,10 +1,20 @@
-let imgDrwPrps = {aspect: 0, width: 0, height: 0, xOffset: 0, yOffset: 0};
-let canvasAspectRatio = 0;
-let numRandomRects; // 黄色线条上的矩形的数量
+// Defining Global Variables
+let imgDrwPrps = {
+  aspect: 0,
+  width: 0,
+  height: 0,
+  xOffset: 0,
+  yOffset: 0
+};
 
+let canvasAspectRatio = 0;
 let song; // audio file
 let fft; // FFT object
 let button;
+let numBins = 128 ;
+let smoothing = 0.9;
+let speedFactor = 0.1; 
+let frameCounter = 0;
 
 function preload() {
   // Preloading audio files
@@ -18,23 +28,107 @@ function setup() {
   noLoop(); // No drawing loop
 
   //Initialise the FFT object
-  fft = new p5.FFT();
+  fft = new p5.FFT(smoothing, numBins);
 
   // Create Button
   button = createButton("Play/Pause");
   positionButton(); // Setting the button position
     button.mousePressed(play_pause);
-  
+    colorMode(HSB, 255);
 }
 
 function draw() {
-  background(240, 240, 240); // 背景颜色
+  background(240, 240, 240); // Setting the background colour
+
+  noStroke(); // Disable border lines
+
+  // Access to spectrum data
+  // This code is from the chatgpt
+    let bass = fft.getEnergy("bass") * speedFactor;
+    let treble = fft.getEnergy("treble") * speedFactor;
+    let mid = fft.getEnergy("mid") * speedFactor;
+
+  //Drawing static graphics
+  drawShapes();
 
 
-  noStroke(); // 禁用边框边线
+  // Adjusting the properties of rect113 using spectral data
+  let rect113X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.897 + map(bass, 0, 255, -10, 10);
+  let randomRect3 = random(0.044, 0.05);
+  let rect113Y = imgDrwPrps.yOffset + imgDrwPrps.height * randomRect3 + map(mid, 0, 255, -5, 5);
+  let rect113W = imgDrwPrps.width * 0.065 + map(treble, 0, 255, -5, 5);
+  let rect113H = imgDrwPrps.height * 0.035 + map(bass, 0, 255, -5, 5);
 
-  // 计算相对位置和大小
-  // Y轴开始从上到下的黄色线条矩形
+  let rect114X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.897 + map(bass, 0, 255, -10, 10);
+  let randomRect4 = random(0.088, 0.44);
+  let rect114Y = imgDrwPrps.yOffset + imgDrwPrps.height * randomRect4 + map(mid, 0, 255, -5, 5);
+  let rect114W = imgDrwPrps.width * 0.065 + map(treble, 0, 255, -5, 5);
+  let rect114H = imgDrwPrps.height * 0.035 + map(bass, 0, 255, -5, 5);
+
+
+
+
+
+
+  ellipse(rect113X, rect113Y, rect113W, rect113H);
+  ellipse(rect114X, rect114Y, rect114W, rect114H);
+
+  fill(0, 0, 0);
+  rect(0, 0, imgDrwPrps.xOffset, height); // Black fill on the left side
+  rect(imgDrwPrps.xOffset + imgDrwPrps.width, 0, width - (imgDrwPrps.xOffset + imgDrwPrps.width), height);
+}
+
+
+function play_pause() {
+  if (song.isPlaying()) {
+    song.pause(); // Pause music playback
+    noLoop(); // Pause the drawing loop
+  } else {
+    song.play(); // play music
+    loop(); //  Starting the drawing cycle
+  }
+}
+
+function keyPressed() {
+  if (key === 'F') {
+    speedFactor += 1; // Rate of increase factor
+  } else if (key === 'S') {
+    speedFactor -= 1; // Reduced rate factor
+  }
+}
+
+function calculateCanvasProps() {
+  // Calculating Canvas Properties
+  canvasAspectRatio = windowWidth / windowHeight;
+
+  if (canvasAspectRatio >= 1) {
+    // Landscape or square
+    imgDrwPrps.width = windowHeight;
+    imgDrwPrps.height = windowHeight;
+    imgDrwPrps.xOffset = (windowWidth - windowHeight) / 2;
+    imgDrwPrps.yOffset = 0;
+  } else {
+    // Portrait
+    imgDrwPrps.width = windowWidth;
+    imgDrwPrps.height = windowWidth;
+    imgDrwPrps.xOffset = 0;
+    imgDrwPrps.yOffset = (windowHeight - windowWidth) / 2;
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  calculateCanvasProps(); //Update Canvas Properties
+}
+
+function positionButton() {
+  // Setting the button position
+  button.position((windowWidth - button.size().width) / 2, windowHeight - button.size().height - 2);
+}
+
+
+function drawShapes() {
+
   let rect1X = imgDrwPrps.xOffset;
   let rect1Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.024;
   let rect1W = imgDrwPrps.width;
@@ -102,7 +196,7 @@ function draw() {
 
   
 
-  // X轴上从左到右的黄色线条矩形
+  // Rectangle of yellow lines from left to right on the x-axis
   let rect14X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.025;
   let rect14Y = imgDrwPrps.yOffset;
   let rect14W = imgDrwPrps.width * 0.02;
@@ -163,8 +257,8 @@ function draw() {
   let rect25W = imgDrwPrps.width * 0.02;
   let rect25H = imgDrwPrps.height * 0.160;
 
-  //固定的交叉处的正方形蓝色方块
-  //第一行三个
+  //Square blue squares at fixed intersections
+  //Three in the first row.
   let rect26X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.025;
   let rect26Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.024;
   let rect26W = imgDrwPrps.width * 0.02;
@@ -180,7 +274,7 @@ function draw() {
   let rect28W = imgDrwPrps.width * 0.02;
   let rect28H = imgDrwPrps.height * 0.02;
 
-  //第二行四个
+  //Four in the second row
   let rect29X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.115;
   let rect29Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.160;
   let rect29W = imgDrwPrps.width * 0.02;
@@ -201,7 +295,7 @@ function draw() {
   let rect32W = imgDrwPrps.width * 0.02;
   let rect32H = imgDrwPrps.height * 0.02;
 
-  //第三行四个
+  //Four in the third row
   let rect33X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect33Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.350;
   let rect33W = imgDrwPrps.width * 0.02;
@@ -222,7 +316,7 @@ function draw() {
   let rect36W = imgDrwPrps.width * 0.02;
   let rect36H = imgDrwPrps.height * 0.02;
 
-  //第四行两个
+  //Two in the fourth row.
   let rect37X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect37Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.430;
   let rect37W = imgDrwPrps.width * 0.02;
@@ -233,7 +327,7 @@ function draw() {
   let rect38W = imgDrwPrps.width * 0.02;
   let rect38H = imgDrwPrps.height * 0.02;
 
-  //第五行三个
+  //Three in the fifth row
   let rect39X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect39Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.560;
   let rect39W = imgDrwPrps.width * 0.02;
@@ -249,7 +343,7 @@ function draw() {
   let rect41W = imgDrwPrps.width * 0.02;
   let rect41H = imgDrwPrps.height * 0.02;
 
-  //第六行两个
+  //Two in the sixth row.
   let rect42X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.115;
   let rect42Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.625;
   let rect42W = imgDrwPrps.width * 0.02;
@@ -260,19 +354,19 @@ function draw() {
   let rect43W = imgDrwPrps.width * 0.02;
   let rect43H = imgDrwPrps.height * 0.02;
 
-  //第八行一个
+  //One in the eighth row.
   let rect44X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.225;
   let rect44Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.725;
   let rect44W = imgDrwPrps.width * 0.02;
   let rect44H = imgDrwPrps.height * 0.02;
   
-  //第十行一个
+  //One in the tenth row.
   let rect45X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.842;
   let rect45Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.805;
   let rect45W = imgDrwPrps.width * 0.02;
   let rect45H = imgDrwPrps.height * 0.02;
 
-  //第十一行四个
+  //Four in line 11
   let rect46X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect46Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.850;
   let rect46W = imgDrwPrps.width * 0.02;
@@ -293,7 +387,7 @@ function draw() {
   let rect49W = imgDrwPrps.width * 0.02;
   let rect49H = imgDrwPrps.height * 0.02;
 
-  //第十三行三个
+  //Three in the thirteenth line
   let rect50X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.115;
   let rect50Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.940;
   let rect50W = imgDrwPrps.width * 0.02;
@@ -310,8 +404,8 @@ function draw() {
   let rect52H = imgDrwPrps.height * 0.02;
 
 
-  //固定的交叉处的正方形红色方块
-  //第二行两个个
+  //Square red squares at fixed intersections
+  //Two in the second row
   let rect53X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.025;
   let rect53Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.160;
   let rect53W = imgDrwPrps.width * 0.02;
@@ -322,7 +416,7 @@ function draw() {
   let rect54W = imgDrwPrps.width * 0.02;
   let rect54H = imgDrwPrps.height * 0.02;
 
-  //第三行三个
+  //Three in the third row.
   let rect55X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.025;
   let rect55Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.350;
   let rect55W = imgDrwPrps.width * 0.02;
@@ -338,7 +432,7 @@ function draw() {
   let rect57W = imgDrwPrps.width * 0.02;
   let rect57H = imgDrwPrps.height * 0.02;
 
-  //第四行四个
+  //Four in the fourth row
   let rect58X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.115;
   let rect58Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.430;
   let rect58W = imgDrwPrps.width * 0.02;
@@ -359,7 +453,7 @@ function draw() {
   let rect61W = imgDrwPrps.width * 0.02;
   let rect61H = imgDrwPrps.height * 0.02;
 
-  //第五行三个
+  //Three in the fifth row
   let rect62X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.647;
   let rect62Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.560;
   let rect62W = imgDrwPrps.width * 0.02;
@@ -375,7 +469,7 @@ function draw() {
   let rect64W = imgDrwPrps.width * 0.02;
   let rect64H = imgDrwPrps.height * 0.02;
 
-  //第六行三个
+  //Three in the sixth line
   let rect65X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect65Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.625;
   let rect65W = imgDrwPrps.width * 0.02;
@@ -391,13 +485,13 @@ function draw() {
   let rect67W = imgDrwPrps.width * 0.02;
   let rect67H = imgDrwPrps.height * 0.02;
 
-  //第七行一个
+  //One in the seventh row.
   let rect68X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect68Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.685;
   let rect68W = imgDrwPrps.width * 0.02;
   let rect68H = imgDrwPrps.height * 0.02;
 
-  //第八行两个
+  //Two in the eighth row.
   let rect69X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect69Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.725;
   let rect69W = imgDrwPrps.width * 0.02;
@@ -408,13 +502,13 @@ function draw() {
   let rect70W = imgDrwPrps.width * 0.02;
   let rect70H = imgDrwPrps.height * 0.02;
 
-  //第九行一个
+  //One in the ninth row.
   let rect71X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect71Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.775;
   let rect71W = imgDrwPrps.width * 0.02;
   let rect71H = imgDrwPrps.height * 0.02;
 
-  //第十行三个
+  //Three in the tenth row
   let rect72X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.577;
   let rect72Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.850;
   let rect72W = imgDrwPrps.width * 0.02;
@@ -430,7 +524,7 @@ function draw() {
   let rect74W = imgDrwPrps.width * 0.02;
   let rect74H = imgDrwPrps.height * 0.02;
 
-  //第十三行两个
+  //Two in the thirteenth line
   let rect75X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.06;
   let rect75Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.940;
   let rect75W = imgDrwPrps.width * 0.02;
@@ -441,14 +535,14 @@ function draw() {
   let rect76W = imgDrwPrps.width * 0.02;
   let rect76H = imgDrwPrps.height * 0.02;
 
-  //固定的交叉处的正方形灰色方块
-  //第一行一个
+  //Square grey squares at fixed intersections
+  //One for the first line.
   let rect77X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.877;
   let rect77Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.024;
   let rect77W = imgDrwPrps.width * 0.02;
   let rect77H = imgDrwPrps.height * 0.02;
 
-  //第三行三个
+  //Three in the third row.
   let rect78X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.115;
   let rect78Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.350;
   let rect78W = imgDrwPrps.width * 0.02;
@@ -464,7 +558,7 @@ function draw() {
   let rect80W = imgDrwPrps.width * 0.02;
   let rect80H = imgDrwPrps.height * 0.02;
   
-  //第四行两个
+  //Two in the fourth row.
   let rect81X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.537;
   let rect81Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.430;
   let rect81W = imgDrwPrps.width * 0.02;
@@ -475,7 +569,7 @@ function draw() {
   let rect82W = imgDrwPrps.width * 0.02;
   let rect82H = imgDrwPrps.height * 0.02;
 
-  //第五行两个
+  //Two in the fifth row.
   let rect83X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.537;
   let rect83Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.560;
   let rect83W = imgDrwPrps.width * 0.02;
@@ -486,7 +580,7 @@ function draw() {
   let rect84W = imgDrwPrps.width * 0.02;
   let rect84H = imgDrwPrps.height * 0.02;
 
-  //第六行两个
+  //Two in the sixth row.
   let rect85X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.537;
   let rect85Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.625;
   let rect85W = imgDrwPrps.width * 0.02;
@@ -497,13 +591,13 @@ function draw() {
   let rect86W = imgDrwPrps.width * 0.02;
   let rect86H = imgDrwPrps.height * 0.02;
 
-  //第七行一个
+  //One in the seventh row.
   let rect87X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.537;
   let rect87Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.725;
   let rect87W = imgDrwPrps.width * 0.02;
   let rect87H = imgDrwPrps.height * 0.02;
 
-  //第十三行两个
+  //Two in the thirteenth line
   let rect88X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.537;
   let rect88Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.940;
   let rect88W = imgDrwPrps.width * 0.02;
@@ -514,7 +608,7 @@ function draw() {
   let rect89W = imgDrwPrps.width * 0.02;
   let rect89H = imgDrwPrps.height * 0.02;
 
-  //固定的灰色矩形
+  //Fixed grey rectangle
   let rect106X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.165;
   let rect106Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.285;
   let rect106W = imgDrwPrps.width * 0.03;
@@ -530,9 +624,7 @@ function draw() {
   let rect108W = imgDrwPrps.width * 0.03;
   let rect108H = imgDrwPrps.height * 0.025;
 
-
-
-  //移动的灰色矩形
+  //Moving grey rectangle
   let rect115X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.407;
   let randomRect5 = random(0.37, 0.505);
   let rect115Y = imgDrwPrps.yOffset + imgDrwPrps.height * randomRect5;
@@ -548,7 +640,7 @@ function draw() {
   let randomRect9 = random(0.025, 0.05);
   let rect116H = imgDrwPrps.height * randomRect9;
 
-  //固定的红色矩形
+  //Fixed red rectangle
   let rect90X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.155;
   let rect90Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.044;
   let rect90W = imgDrwPrps.width * 0.045;
@@ -579,7 +671,7 @@ function draw() {
   let rect109W = imgDrwPrps.width * 0.09;
   let rect109H = imgDrwPrps.height * 0.07;
 
-  //移动的红色矩形
+  //Moving red rectangle
   let rect120X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.877;
   let randomRect11 = random(0.18, 0.29);
   let rect120Y = imgDrwPrps.yOffset + imgDrwPrps.height * randomRect11;
@@ -592,7 +684,7 @@ function draw() {
   let rect121W = imgDrwPrps.width * 0.065;
   let rect121H = imgDrwPrps.height * 0.06;
 
-  //固定的蓝色矩形
+  //Fixed blue rectangle
   let rect94X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.652;
   let rect94Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.180;
   let rect94W = imgDrwPrps.width * 0.09;
@@ -608,7 +700,7 @@ function draw() {
   let rect97W = imgDrwPrps.width * 0.06;
   let rect97H = imgDrwPrps.height * 0.065;
 
-  //移动的蓝色矩形
+  //Moving Blue Rectangle
   let rect111X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.08;
   let randomRect2 = random(0.18, 0.295);
   let rect111Y = imgDrwPrps.yOffset + imgDrwPrps.height * randomRect2;
@@ -627,7 +719,7 @@ function draw() {
   let rect114W = imgDrwPrps.width * 0.055;
   let rect114H = imgDrwPrps.height * 0.055;
 
-  //固定的黄色矩形
+  //Fixed yellow rectangle
   let rect98X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.135;
   let rect98Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.265;
   let rect98W = imgDrwPrps.width * 0.09;
@@ -668,14 +760,14 @@ function draw() {
   let rect105W = imgDrwPrps.width * 0.045;
   let rect105H = imgDrwPrps.height * 0.035;
   
-  //移动的黄色矩形
+  //Fixed yellow rectangles
   let rect110X = imgDrwPrps.xOffset + imgDrwPrps.width * 0.135;
   let randomRect1 = random(0.044, 0.13);
   let rect110Y = imgDrwPrps.yOffset + imgDrwPrps.height * randomRect1;
   let rect110W = imgDrwPrps.width * 0.09;
   let rect110H = imgDrwPrps.height * 0.03;
 
-  //组合矩形移动
+  //Combined Rectangle Move
   let randomRect10 = random(0.245, 0.467);
   let rect117X = imgDrwPrps.xOffset + imgDrwPrps.width * randomRect10;
   let rect117Y = imgDrwPrps.yOffset + imgDrwPrps.height * 0.044;
@@ -692,17 +784,14 @@ function draw() {
   let rect119W = imgDrwPrps.width * 0.04;
   let rect119H = imgDrwPrps.height * 0.035;
 
-
-
-
   //PART ONE
 
-  // 绘制色块
-  fill(75, 107, 186); // 蓝色，图层
+  // Drawing Colour Blocks
+  fill(75, 107, 186); // Blue, Layer
   rect(rect113X, rect113Y, rect113W, rect113H);
 
-  fill(230, 207, 48); // 黄色
-  //横着的固定黄色矩形线条
+  fill(230, 207, 48); // yellow 
+  //Fixed yellow rectangular line across
   rect(rect1X, rect1Y, rect1W, rect1H);
   rect(rect2X, rect2Y, rect2W, rect2H);
   rect(rect3X, rect3Y, rect3W, rect3H);
@@ -716,7 +805,7 @@ function draw() {
   rect(rect11X, rect11Y, rect11W, rect11H);
   rect(rect12X, rect12Y, rect12W, rect12H);
   rect(rect13X, rect13Y, rect13W, rect13H);
-  //竖着的固定黄色矩形线条
+  //Vertical fixed yellow rectangular lines
   rect(rect14X, rect14Y, rect14W, rect14H);
   rect(rect15X, rect15Y, rect15W, rect15H);
   rect(rect16X, rect16Y, rect16W, rect16H);
@@ -730,7 +819,7 @@ function draw() {
   rect(rect24X, rect24Y, rect24W, rect24H);
   rect(rect25X, rect25Y, rect25W, rect25H);
 
-  //固定的黄色矩形
+  //Fixed yellow rectangle
   rect(rect98X, rect98Y, rect98W, rect98H);
   rect(rect99X, rect99Y, rect99W, rect99H);
   rect(rect100X, rect100Y, rect100W, rect100H);
@@ -739,79 +828,68 @@ function draw() {
   rect(rect103X, rect103Y, rect103W, rect103H);
 
 
-
-
-
-
-
 //PART 2
 
-  fill(173, 58, 47); // 红色
-  //第二行两个个
+  fill(173, 58, 47); // red
+  //Two in the second row
   rect(rect53X, rect53Y, rect53W, rect53H);
   rect(rect54X, rect54Y, rect54W, rect54H);
 
-  //第三行三个
+  //Three in the third row.
   rect(rect55X, rect55Y, rect55W, rect55H);
   rect(rect56X, rect56Y, rect56W, rect56H);
   rect(rect57X, rect57Y, rect57W, rect57H);
 
-  //第四行四个
+  //Four in the fourth row
   rect(rect58X, rect58Y, rect58W, rect58H);
   rect(rect59X, rect59Y, rect59W, rect59H);
   rect(rect60X, rect60Y, rect60W, rect60H);
   rect(rect61X, rect61Y, rect61W, rect61H);
 
-  //第五行三个
+  //Three in the fifth row
   rect(rect62X, rect62Y, rect62W, rect62H);
   rect(rect63X, rect63Y, rect63W, rect63H);
   rect(rect64X, rect64Y, rect64W, rect64H);
 
-  //第六行三个
+  //Three in the sixth line
   rect(rect65X, rect65Y, rect65W, rect65H);
   rect(rect66X, rect66Y, rect66W, rect66H);
   rect(rect67X, rect67Y, rect67W, rect67H);
 
-  //第六行三个
+  //Three in the sixth row
   rect(rect68X, rect68Y, rect68W, rect68H);
 
-  //第七行两个
+  //Two in the seventh row.
   rect(rect69X, rect69Y, rect69W, rect69H);
   rect(rect70X, rect70Y, rect70W, rect70H);
 
-  //第七行一个
+  //One in the seventh row.
   rect(rect71X, rect71Y, rect71W, rect71H);
 
-  //第十行三个
+  //Three in the tenth row
   rect(rect72X, rect72Y, rect72W, rect72H);
   rect(rect73X, rect73Y, rect73W, rect73H);
   rect(rect74X, rect74Y, rect74W, rect74H);
 
-  //第十三行两个
+  //Two in the thirteenth line
   rect(rect75X, rect75Y, rect75W, rect75H);
   rect(rect76X, rect76Y, rect76W, rect76H);
 
-
-
-
   //PART 3
 
-
-
-
-  //固定的红色矩形
+  //Fixed red rectangle
   rect(rect90X, rect90Y, rect90W, rect90H);
   rect(rect91X, rect91Y, rect91W, rect91H);
   rect(rect92X, rect92Y, rect92W, rect92H);
   rect(rect93X, rect93Y, rect93W, rect93H);
   rect(rect109X, rect109Y, rect109W, rect109H);
 
-  //移动的红色矩形
+  //Moving red rectangle
   rect(rect117X, rect117Y, rect117W, rect117H);
   rect(rect120X, rect120Y, rect120W, rect120H);
   rect(rect121X, rect121Y, rect121W, rect121H);
 
-  //移动的红色小矩形
+  //Moving small red rectangles
   for (let i = 0; i < 2; i++) {
     let randX = rect1X + random(imgDrwPrps.width * 0.045, imgDrwPrps.width * 0.822);
     let randY = rect1Y + random(0, rect1H - (imgDrwPrps.height * 0.02));
@@ -887,61 +965,61 @@ function draw() {
 
   //PART 4 
 
-  fill(75, 107, 186); // 蓝色
-  //第一行三个
+  fill(75, 107, 186); // blue
+  //Three in the first row.
   rect(rect26X, rect26Y, rect26W, rect26H);
   rect(rect27X, rect27Y, rect27W, rect27H);
   rect(rect28X, rect28Y, rect28W, rect28H);
-  //第二行四个
+  //Four in the second row
   rect(rect29X, rect29Y, rect29W, rect29H);
   rect(rect30X, rect30Y, rect30W, rect30H);
   rect(rect31X, rect31Y, rect31W, rect31H);
   rect(rect32X, rect32Y, rect32W, rect32H);
-  //第三行四个
+  //Four in the third row
   rect(rect33X, rect33Y, rect33W, rect33H);
   rect(rect34X, rect34Y, rect34W, rect34H);
   rect(rect35X, rect35Y, rect35W, rect35H);
   rect(rect36X, rect36Y, rect36W, rect36H);
 
-  //第四行两个
+  //Two in the fourth row.
   rect(rect37X, rect37Y, rect37W, rect37H);
   rect(rect38X, rect38Y, rect38W, rect38H);
 
-  //第五行三个
+  //Three in the fifth row
   rect(rect39X, rect39Y, rect39W, rect39H);
   rect(rect40X, rect40Y, rect40W, rect40H);
   rect(rect41X, rect41Y, rect41W, rect41H);
 
-  //第六行两个
+  //Two in the sixth row.
   rect(rect42X, rect42Y, rect42W, rect42H);
   rect(rect43X, rect43Y, rect43W, rect43H);
 
-  //第八行一个
+  //One in the eighth row.
   rect(rect44X, rect44Y, rect44W, rect44H);
 
-  //第十行一个
+  //One in the tenth row.
   rect(rect45X, rect45Y, rect45W, rect45H);
 
-  //第十一行四个
+  //Four in line 11
   rect(rect46X, rect46Y, rect46W, rect46H);
   rect(rect47X, rect47Y, rect47W, rect47H);
   rect(rect48X, rect48Y, rect48W, rect48H);
   rect(rect49X, rect49Y, rect49W, rect49H);
 
-  //第十三行三个
+  //thirteenth line three
   rect(rect50X, rect50Y, rect50W, rect50H);
   rect(rect51X, rect51Y, rect51W, rect51H);
   rect(rect52X, rect52Y, rect52W, rect52H);
 
-  //固定的蓝色矩形
+  //Fixed blue rectangle
   rect(rect94X, rect94Y, rect94W, rect94H);
   rect(rect96X, rect96Y, rect96W, rect96H);
   rect(rect97X, rect97Y, rect97W, rect97H);
 
-  //移动的蓝色矩形
+  //Moving Blue Rectangle
   rect(rect111X, rect111Y, rect111W, rect111H);
   
-  //移动的蓝色小矩形
+  //Moving small blue rectangles
   for (let i = 0; i < 3; i++) {
     let randX = rect1X + random(imgDrwPrps.width * 0.045, imgDrwPrps.width * 0.822);
     let randY = rect1Y + random(0, rect1H - (imgDrwPrps.height * 0.02));
@@ -982,28 +1060,25 @@ function draw() {
     rect(randX, randY, randW, randH);
   }
 
-
-  
-
   //PART 5
 
-  fill(173, 58, 47); // 红色，图层转换
+  fill(173, 58, 47); // Red, Layer Conversion
   rect(rect95X, rect95Y, rect95W, rect95H);
 
-  fill(219, 217, 213); // 灰色
-  //第一行一个
+  fill(219, 217, 213); // grey
+  //One for the first line.
   rect(rect77X, rect77Y, rect77W, rect77H);
 
-  //第三行三个
+  //Three in the third row.
   rect(rect78X, rect78Y, rect78W, rect78H);
   rect(rect79X, rect79Y, rect79W, rect79H);
   rect(rect80X, rect80Y, rect80W, rect80H);
 
-  //第四行两个
+  //Two in the fourth row.
   rect(rect81X, rect81Y, rect81W, rect81H);
   rect(rect82X, rect82Y, rect82W, rect82H);
 
-  //第五行两个
+  //Two in the sixth row.
   rect(rect83X, rect83Y, rect83W, rect83H);
   rect(rect84X, rect84Y, rect84W, rect84H);
 
@@ -1011,25 +1086,25 @@ function draw() {
   rect(rect85X, rect85Y, rect85W, rect85H);
   rect(rect86X, rect86Y, rect86W, rect86H);
 
-  //第八行一个
+  //One in the eighth row.
   rect(rect87X, rect87Y, rect87W, rect87H);
 
-  //第十三行两个
+  //Two in the thirteenth line
   rect(rect88X, rect88Y, rect88W, rect88H);
   rect(rect89X, rect89Y, rect89W, rect89H);
   
-  //固定的灰色矩形
+  //Fixed grey rectangle
   rect(rect106X, rect106Y, rect106W, rect106H);
   rect(rect107X, rect107Y, rect107W, rect107H);
   rect(rect108X, rect108Y, rect108W, rect108H);
 
-  //移动的灰色矩形
+  //Moving grey rectangle
   rect(rect115X, rect115Y, rect115W, rect115H);
   rect(rect116X, rect116Y, rect116W, rect116H);
   rect(rect118X, rect118Y, rect118W, rect118H);
   rect(rect119X, rect119Y, rect119W, rect119H);
   
-  //移动的灰色小正方形
+  //Moving grey squares
   for (let i = 0; i < 3; i++) {
     let randX = rect1X + random(imgDrwPrps.width * 0.045, imgDrwPrps.width * 0.822);
     let randY = rect1Y + random(0, rect1H - (imgDrwPrps.height * 0.02));
@@ -1096,68 +1171,16 @@ function draw() {
 
 
 
-  fill(230, 207, 48); // 黄色,图层转换
-  //固定的黄色矩形
+  fill(230, 207, 48); // Yellow, Layer Conversion
+  //Fixed yellow rectangle
   rect(rect104X, rect104Y, rect104W, rect104H);
   rect(rect105X, rect105Y, rect105W, rect105H);
 
-  //移动的黄色矩形
+  //Moving yellow rectangle
   rect(rect110X, rect110Y, rect110W, rect110H);
 
-  fill(75, 107, 186); // 蓝色，图层转换
+  fill(75, 107, 186); //Blue, Layer Conversion
   rect(rect114X, rect114Y, rect114W, rect114H);
 
-  
-  /*// 设置描边 这个是给图画描边的方法
-  stroke(0); // 黑色描边
-  strokeWeight(2); // 描边宽度
-  noFill();
-  rect(imgDrwPrps.xOffset, imgDrwPrps.yOffset, imgDrwPrps.width, imgDrwPrps.height);*/
 
-  //两侧填充黑色的方法
-  fill(0, 0, 0);
-  rect(0, 0, imgDrwPrps.xOffset, height); // 左侧黑色填充
-  rect(imgDrwPrps.xOffset + imgDrwPrps.width, 0, width - (imgDrwPrps.xOffset + imgDrwPrps.width), height); // 右侧黑色填充
-}
-
-function play_pause() {
-  if (song.isPlaying()) {
-    song.pause(); // Pause music playback
-    noLoop(); // Pause the drawing loop
-  } else {
-    song.play(); // play music
-    loop(); //  Starting the drawing cycle
-  }
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  calculateCanvasProps();
-  redraw(); // 重新绘制画布
-}
-
-function positionButton() {
-  // Setting the button position
-  button.position((windowWidth - button.size().width) / 2, windowHeight - button.size().height - 2);
-}
-
-
-function calculateCanvasProps() {
-  // Calculate the aspect ratio of the canvas
-  canvasAspectRatio = windowWidth / windowHeight;
-  
-  // Set imgDrwPrps to match the window aspect ratio
-  if (canvasAspectRatio >= 1) {
-    // Landscape or square
-    imgDrwPrps.width = windowHeight;
-    imgDrwPrps.height = windowHeight;
-    imgDrwPrps.xOffset = (windowWidth - windowHeight) / 2;
-    imgDrwPrps.yOffset = 0;
-  } else {
-    // Portrait
-    imgDrwPrps.width = windowWidth;
-    imgDrwPrps.height = windowWidth;
-    imgDrwPrps.xOffset = 0;
-    imgDrwPrps.yOffset = (windowHeight - windowWidth) / 2;
-  }
 }
